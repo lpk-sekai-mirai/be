@@ -4,20 +4,19 @@ import {
   getStudents,
   getStudentById,
   updateStudent,
-  updateInterview, // ⬅️ tambah
+  updateInterview,
   deleteStudent,
 } from "../controllers/studentController.js";
 import { verifyToken } from "../middlewares/auth.js";
 import { upload } from "../middlewares/upload.js";
 
 const router = express.Router();
-router.use(verifyToken);
 
 router.get("/", getStudents);
 router.get("/:id", getStudentById);
-router.post("/", upload.single("foto"), createStudent);
-router.put("/:id", upload.single("foto"), updateStudent);
-router.put("/:id/interview", updateInterview);
-router.delete("/:id", deleteStudent);
+router.post("/", verifyToken, upload.single("foto"), createStudent);
+router.put("/:id", verifyToken, upload.single("foto"), updateStudent);
+router.put("/:id/interview", verifyToken, updateInterview);
+router.delete("/:id", verifyToken, deleteStudent);
 
 export default router;
