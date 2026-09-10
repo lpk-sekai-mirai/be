@@ -29,7 +29,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
 sequelize
-  .sync({ alter: true })
+  .sync()
   .then(() => console.log("Database connected"))
   .catch((err) => console.log(err));
 
