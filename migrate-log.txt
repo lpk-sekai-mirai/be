@@ -1,0 +1,18 @@
+✅ Source (MySQL lokal) connected
+✅ Target (Railway) connected
+
+🧹 Membersihkan database target...
+   🗑️  DROP TABLE `users`
+   ✅ 1 tabel lama dihapus
+
+⏳ Migrating: Users
+   📛 Nama asli tabel: `users`
+   ✅ Struktur tabel dibuat
+   ✅ 1 baris di-import
+
+⏳ Migrating: Students
+   📛 Nama asli tabel: `students`
+   ✅ Struktur tabel dibuat
+   ✅ 51 baris di-import
+
+🔒 FK checks re-enabled
