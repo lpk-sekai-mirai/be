@@ -6,19 +6,14 @@ dotenv.config();
 let sequelize;
 
 if (process.env.DATABASE_URL) {
-  // === PRODUCTION (PostgreSQL via Render) ===
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: "postgres",
     logging: false,
     dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false, // wajib untuk Render
-      },
+      ssl: { require: true, rejectUnauthorized: false },
     },
   });
 } else {
-  // === DEVELOPMENT (MySQL lokal) ===
   sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
@@ -26,7 +21,7 @@ if (process.env.DATABASE_URL) {
     {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
-      dialect: process.env.DB_DIALECT || "mysql",
+      dialect: "mysql",
       logging: false,
     }
   );
