@@ -4,16 +4,12 @@ import { Op } from "sequelize";
 export const getStats = async (req, res) => {
   try {
     const total = await Student.count();
-
-    // Hitung yang lulus interview
-    // ⚠️ Ini butuh field `statusInterview` di model Student
     let totalLulusInterview = 0;
     try {
       totalLulusInterview = await Student.count({
         where: { statusInterview: "lulus" },
       });
     } catch {
-      // Kalau field statusInterview belum ada, biarkan 0
       totalLulusInterview = 0;
     }
 
@@ -25,7 +21,7 @@ export const getStats = async (req, res) => {
     // Ambil 5 foto terbaru
     const photos = await Student.findAll({
       attributes: ["foto", "nama"],
-      where: { foto: { [Op.not]: null } }, // hanya yang punya foto
+      where: { foto: { [Op.not]: null } },
       limit: 5,
       order: [["createdAt", "DESC"]],
     });

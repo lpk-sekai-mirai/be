@@ -11,7 +11,6 @@ import { verifyToken } from "../middlewares/auth.js";
 import { upload } from "../middlewares/upload.js";
 
 const router = express.Router();
-
 router.get("/", getStudents);
 router.get("/:id", getStudentById);
 router.post("/", verifyToken, upload.single("foto"), createStudent);
