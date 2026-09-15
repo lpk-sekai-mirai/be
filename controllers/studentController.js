@@ -1,6 +1,6 @@
 // controllers/studentController.js
 import Student from "../models/Student.js";
-import { cloudinary } from "../middleware/upload.js";
+import { cloudinary } from "../middlewares/upload.js";
 
 // ===== Helper: generate UID unik =====
 const generateUID = () => {
