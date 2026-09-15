@@ -1,10 +1,6 @@
+// controllers/studentController.js
 import Student from "../models/Student.js";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { cloudinary } from "../middleware/upload.js";
 
 // ===== Helper: generate UID unik =====
 const generateUID = () => {
@@ -26,18 +22,33 @@ const generateStudentID = async () => {
   return `SMC-${String(nextNumber).padStart(4, "0")}`;
 };
 
-// ===== Helper: hapus foto lama =====
-const deleteOldPhoto = (fotoPath) => {
-  if (!fotoPath) return;
-  const filename = path.basename(fotoPath);
-  const filePath = path.join(__dirname, "..", "uploads", filename);
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+// ===== Helper: ekstrak public_id dari URL Cloudinary =====
+// URL contoh: https://res.cloudinary.com/cloud/image/upload/v123/student-photos/abc.jpg
+// public_id : student-photos/abc
+const getPublicIdFromUrl = (url) => {
+  if (!url || !url.includes("cloudinary.com")) return null;
+  const parts = url.split("/");
+  const fileWithExt = parts[parts.length - 1]; // abc.jpg
+  const folder = parts[parts.length - 2]; // student-photos
+  const fileName = fileWithExt.split(".")[0]; // abc
+  return `${folder}/${fileName}`;
+};
+
+// ===== Helper: hapus foto dari Cloudinary =====
+const deleteCloudinaryPhoto = async (fotoUrl) => {
+  if (!fotoUrl) return;
+  const publicId = getPublicIdFromUrl(fotoUrl);
+  if (!publicId) return;
+  try {
+    await cloudinary.v2.uploader.destroy(publicId);
+  } catch (err) {
+    console.error("Gagal hapus foto Cloudinary:", err.message);
+  }
 };
 
 // =================== CREATE (Hanya Data Dasar) ===================
 export const createStudent = async (req, res) => {
   try {
-    // 🔑 Whitelist — hanya field dasar yang boleh masuk
     const { nama, alamat, umur, telp } = req.body;
 
     const data = {
@@ -47,14 +58,18 @@ export const createStudent = async (req, res) => {
       telp: telp || null,
       uid: req.body.uid || generateUID(),
       id: req.body.id || (await generateStudentID()),
-      foto: req.file ? `/uploads/${req.file.filename}` : null,
-      statusInterview: "belum", // default
+      // req.file.path berisi URL Cloudinary lengkap
+      foto: req.file ? req.file.path : null,
+      statusInterview: "belum",
     };
 
     const student = await Student.create(data);
     res.status(201).json(student);
   } catch (err) {
-    if (req.file) deleteOldPhoto(`/uploads/${req.file.filename}`);
+    // Kalau gagal, hapus foto yang sudah terlanjur ter-upload
+    if (req.file && req.file.path) {
+      await deleteCloudinaryPhoto(req.file.path);
+    }
     res.status(400).json({ error: err.message });
   }
 };
@@ -66,7 +81,6 @@ export const updateStudent = async (req, res) => {
     if (!student)
       return res.status(404).json({ error: "Siswa tidak ditemukan" });
 
-    // 🔑 Whitelist — hanya data dasar yang bisa diubah di sini
     const data = {
       nama: req.body.nama,
       alamat: req.body.alamat || null,
@@ -75,14 +89,17 @@ export const updateStudent = async (req, res) => {
     };
 
     if (req.file) {
-      if (student.foto) deleteOldPhoto(student.foto);
-      data.foto = `/uploads/${req.file.filename}`;
+      // Hapus foto lama dari Cloudinary
+      if (student.foto) await deleteCloudinaryPhoto(student.foto);
+      data.foto = req.file.path;
     }
 
     await student.update(data);
     res.json(student);
   } catch (err) {
-    if (req.file) deleteOldPhoto(`/uploads/${req.file.filename}`);
+    if (req.file && req.file.path) {
+      await deleteCloudinaryPhoto(req.file.path);
+    }
     res.status(400).json({ error: err.message });
   }
 };
@@ -96,20 +113,17 @@ export const updateInterview = async (req, res) => {
 
     const { statusInterview, perusahaanLulus, tanggalKeberangkatan } = req.body;
 
-    // Validasi status
     const allowed = ["belum", "lulus", "tidak lulus"];
     if (!allowed.includes(statusInterview)) {
       return res.status(400).json({ error: "Status interview tidak valid" });
     }
 
-    // Kalau status "lulus", perusahaan wajib diisi
     if (statusInterview === "lulus" && !perusahaanLulus) {
       return res.status(400).json({ error: "Perusahaan lulus wajib diisi" });
     }
 
     const data = {
       statusInterview,
-      // Kalau tidak lulus, kosongkan perusahaan & tanggal
       perusahaanLulus: statusInterview === "lulus" ? perusahaanLulus : null,
       tanggalKeberangkatan:
         statusInterview === "lulus" && tanggalKeberangkatan
@@ -151,7 +165,10 @@ export const deleteStudent = async (req, res) => {
     const student = await Student.findByPk(req.params.id);
     if (!student)
       return res.status(404).json({ error: "Siswa tidak ditemukan" });
-    if (student.foto) deleteOldPhoto(student.foto);
+
+    // Hapus foto dari Cloudinary
+    if (student.foto) await deleteCloudinaryPhoto(student.foto);
+
     await student.destroy();
     res.json({ message: "Siswa dihapus" });
   } catch (err) {
