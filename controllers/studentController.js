@@ -113,7 +113,7 @@ export const updateInterview = async (req, res) => {
 
     const { statusInterview, perusahaanLulus, tanggalKeberangkatan } = req.body;
 
-    const allowed = ["belum", "lulus", "tidak lulus"];
+    const allowed = ["belum", "lulus"];
     if (!allowed.includes(statusInterview)) {
       return res.status(400).json({ error: "Status interview tidak valid" });
     }
