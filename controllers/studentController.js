@@ -49,16 +49,19 @@ const deleteCloudinaryPhoto = async (fotoUrl) => {
 // =================== CREATE (Hanya Data Dasar) ===================
 export const createStudent = async (req, res) => {
   try {
-    const { nama, alamat, umur, telp } = req.body;
+    const { nama, alamat, umur, telp, namaJepang, alamatJepang } = req.body;
 
     const data = {
       nama,
       alamat: alamat || null,
       umur: umur ? parseInt(umur, 10) : null,
       telp: telp || null,
+      // ➕ Field Jepang
+      namaJepang: namaJepang || null,
+      alamatJepang: alamatJepang || null,
+
       uid: req.body.uid || generateUID(),
       id: req.body.id || (await generateStudentID()),
-      // req.file.path berisi URL Cloudinary lengkap
       foto: req.file ? req.file.path : null,
       statusInterview: "belum",
     };
@@ -66,7 +69,6 @@ export const createStudent = async (req, res) => {
     const student = await Student.create(data);
     res.status(201).json(student);
   } catch (err) {
-    // Kalau gagal, hapus foto yang sudah terlanjur ter-upload
     if (req.file && req.file.path) {
       await deleteCloudinaryPhoto(req.file.path);
     }
@@ -86,10 +88,12 @@ export const updateStudent = async (req, res) => {
       alamat: req.body.alamat || null,
       umur: req.body.umur ? parseInt(req.body.umur, 10) : null,
       telp: req.body.telp || null,
+      // ➕ Field Jepang
+      namaJepang: req.body.namaJepang || null,
+      alamatJepang: req.body.alamatJepang || null,
     };
 
     if (req.file) {
-      // Hapus foto lama dari Cloudinary
       if (student.foto) await deleteCloudinaryPhoto(student.foto);
       data.foto = req.file.path;
     }
@@ -111,7 +115,12 @@ export const updateInterview = async (req, res) => {
     if (!student)
       return res.status(404).json({ error: "Siswa tidak ditemukan" });
 
-    const { statusInterview, perusahaanLulus, tanggalKeberangkatan } = req.body;
+    const {
+      statusInterview,
+      perusahaanLulus,
+      perusahaanLulusJepang, // ➕
+      tanggalKeberangkatan,
+    } = req.body;
 
     const allowed = ["belum", "lulus"];
     if (!allowed.includes(statusInterview)) {
@@ -125,6 +134,9 @@ export const updateInterview = async (req, res) => {
     const data = {
       statusInterview,
       perusahaanLulus: statusInterview === "lulus" ? perusahaanLulus : null,
+      // ➕ Perusahaan versi Jepang
+      perusahaanLulusJepang:
+        statusInterview === "lulus" ? perusahaanLulusJepang || null : null,
       tanggalKeberangkatan:
         statusInterview === "lulus" && tanggalKeberangkatan
           ? tanggalKeberangkatan
