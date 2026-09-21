@@ -11,10 +11,38 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// ======================
+// CORS Configuration
+// ======================
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.TV_URL].filter(
+  Boolean
+); // buang undefined kalau env kosong
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Izinkan request tanpa origin (Postman, curl, mobile app)
+      if (!origin) return callback(null, true);
+
+      // Normalisasi: hapus trailing slash untuk perbandingan
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      const isAllowed = allowedOrigins.some(
+        (allowed) => allowed?.replace(/\/$/, "") === normalizedOrigin
+      );
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
