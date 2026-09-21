@@ -15,25 +15,23 @@ const app = express();
 // ======================
 // CORS Configuration
 // ======================
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.TV_URL].filter(
-  Boolean
-); // buang undefined kalau env kosong
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.TV_URL,
+  ...(process.env.LAN_ORIGINS || "").split(",").map((s) => s.trim()),
+].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Izinkan request tanpa origin (Postman, curl, mobile app)
       if (!origin) return callback(null, true);
 
-      // Normalisasi: hapus trailing slash untuk perbandingan
       const normalizedOrigin = origin.replace(/\/$/, "");
       const isAllowed = allowedOrigins.some(
-        (allowed) => allowed?.replace(/\/$/, "") === normalizedOrigin
+        (allowed) => allowed.replace(/\/$/, "") === normalizedOrigin
       );
 
-      if (isAllowed) {
-        return callback(null, true);
-      }
+      if (isAllowed) return callback(null, true);
       return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
@@ -54,5 +52,5 @@ sequelize
   .then(() => console.log("Database connected"))
   .catch((err) => console.log(err));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
