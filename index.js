@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -15,11 +14,12 @@ const app = express();
 // ======================
 // CORS Configuration
 // ======================
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.TV_URL,
-  ...(process.env.LAN_ORIGINS || "").split(",").map((s) => s.trim()),
-].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.TV_URL].filter(
+  Boolean
+);
+
+// LAN regex dari .env
+const lanRegex = new RegExp(process.env.LAN_REGEX);
 
 app.use(
   cors({
@@ -27,9 +27,11 @@ app.use(
       if (!origin) return callback(null, true);
 
       const normalizedOrigin = origin.replace(/\/$/, "");
-      const isAllowed = allowedOrigins.some(
-        (allowed) => allowed.replace(/\/$/, "") === normalizedOrigin
-      );
+      const isAllowed =
+        lanRegex.test(normalizedOrigin) ||
+        allowedOrigins.some(
+          (allowed) => allowed.replace(/\/$/, "") === normalizedOrigin
+        );
 
       if (isAllowed) return callback(null, true);
       return callback(new Error(`CORS blocked for origin: ${origin}`));
@@ -52,5 +54,5 @@ sequelize
   .then(() => console.log("Database connected"))
   .catch((err) => console.log(err));
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
