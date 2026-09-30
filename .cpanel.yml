@@ -1,0 +1,5 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/sekty4439/public_html/
+    - /bin/cp index.html $DEPLOYPATH
+    - /bin/cp -R images $DEPLOYPATH
