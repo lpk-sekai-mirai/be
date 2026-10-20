@@ -41,16 +41,31 @@ app.use(
 );
 
 app.use(express.json());
-
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-sequelize
-  .sync()
-  .then(() => console.log("Database connected"))
-  .catch((err) => console.log(err));
+const PORT = process.env.PORT || 5000;
 
-const PORT = process.env.PORT;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+
+    console.log("Database connected successfully");
+
+    await sequelize.sync();
+
+    console.log("Database synchronized");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Database connection failed:");
+    console.error(error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
