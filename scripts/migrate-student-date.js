@@ -64,7 +64,7 @@ async function migrate() {
     // dipertahankan sebagai string YYYY-MM-DD jika database
     // menyimpannya sebagai DATE/DATETIME standar.
     await queryInterface.changeColumn("students", "tanggalKeberangkatan", {
-      type: DataTypes.STRING(10),
+      type: DataTypes.STRING(50),
       allowNull: true,
     });
 

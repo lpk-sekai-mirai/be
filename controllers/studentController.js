@@ -118,29 +118,62 @@ export const updateInterview = async (req, res) => {
     const {
       statusInterview,
       perusahaanLulus,
-      perusahaanLulusJepang, // ➕
+      perusahaanLulusJepang,
       tanggalKeberangkatan,
     } = req.body;
 
+    // Validasi status interview
     const allowed = ["belum", "lulus"];
+
     if (!allowed.includes(statusInterview)) {
-      return res.status(400).json({ error: "Status interview tidak valid" });
+      return res.status(400).json({
+        error: "Status interview tidak valid",
+      });
     }
 
     if (statusInterview === "lulus" && !perusahaanLulus) {
-      return res.status(400).json({ error: "Perusahaan lulus wajib diisi" });
+      return res.status(400).json({
+        error: "Perusahaan lulus wajib diisi",
+      });
+    }
+
+    // Validasi format tanggal dengan presisi berbeda
+    const tanggal = tanggalKeberangkatan?.trim() || null;
+
+    const formatValid =
+      tanggal === null ||
+      /^\d{4}$/.test(tanggal) ||
+      /^\d{4}-(0[1-9]|1[0-2])$/.test(tanggal) ||
+      /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(tanggal);
+
+    if (!formatValid) {
+      return res.status(400).json({
+        error: "Gunakan format YYYY, YYYY-MM, atau YYYY-MM-DD",
+      });
+    }
+
+    // Validasi keberadaan tanggal kalender
+    if (tanggal && tanggal.length === 10) {
+      const [year, month, day] = tanggal.split("-").map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+
+      if (
+        date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day
+      ) {
+        return res.status(400).json({
+          error: "Tanggal keberangkatan tidak valid",
+        });
+      }
     }
 
     const data = {
       statusInterview,
       perusahaanLulus: statusInterview === "lulus" ? perusahaanLulus : null,
-      // ➕ Perusahaan versi Jepang
       perusahaanLulusJepang:
         statusInterview === "lulus" ? perusahaanLulusJepang || null : null,
-      tanggalKeberangkatan:
-        statusInterview === "lulus" && tanggalKeberangkatan
-          ? tanggalKeberangkatan
-          : null,
+      tanggalKeberangkatan: statusInterview === "lulus" ? tanggal : null,
     };
 
     await student.update(data);
