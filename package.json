@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "seed": "node seeders/seedStudents.js"
+    "seed": "node seeders/seedStudents.js",
+    "export:db": "node export.js",
+    "migrate:student-date": "node scripts/migrate-student-date.js"
   },
   "author": "",
   "license": "ISC",

@@ -43,9 +43,12 @@ const Student = sequelize.define(
     telp: {
       type: DataTypes.STRING,
     },
+
     tanggalKeberangkatan: {
-      type: DataTypes.DATE,
+      type: DataTypes.STRING(10),
+      allowNull: true,
     },
+
     statusInterview: {
       type: DataTypes.ENUM("belum", "lulus"),
       defaultValue: "belum",
